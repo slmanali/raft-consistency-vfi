@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "raft-consistency-vfi"
+version = "0.1.0"
+description = "A controlled study of flow consistency weighting for video frame interpolation"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10", "Pillow>=10"]
+
+[project.optional-dependencies]
+models = ["torch>=2.2", "torchvision>=0.17", "lpips>=0.1.4"]
+
+[project.scripts]
+rcvfi = "raft_consistency_vfi.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
