@@ -33,8 +33,13 @@ The supplied archive was checked independently in the authoring environment:
   the small difference from metrics measured before image export.
 
 This audit validates the supplied logs and saved examples. It does not rerun RAFT
-on the authoring machine. The source manifest is absent from the archive, so
-exact triplet paths and correspondence to the official lists still require the
-original `data/snu_film.csv`. Full float predictions and flows are also absent.
+on the authoring machine. The source manifest was supplied separately after the
+archive audit. Its SHA-256 matches the run log exactly, and all 1,240 ids, split
+labels and sequence groups match the metric records. Each triplet has distinct
+paths in one sequence directory and symmetric frame indices. The frame step is
+1, 2, 4 or 8 in Easy, Medium, Hard or Extreme, respectively. See
+[`manifest_check.json`](results/2026-09-17/manifest_check.json).
+The original source image files and official test lists were not independently
+compared. Full float predictions and flows are also absent.
 RIFE has not been run or compared. See [the results record](results/2026-09-17/README.md)
 for numerical findings, hashes and measurement limits.

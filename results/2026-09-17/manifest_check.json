@@ -1,0 +1,39 @@
+{
+  "checked_utc_date": "2026-09-17",
+  "manifest_supplied_separately": true,
+  "manifest_sha256": "0c849ffa7390531391a6b91b567e2a0f4faec2edccd4644f14701d9daab21867",
+  "matches_recorded_manifest_sha256": true,
+  "triplets": 1240,
+  "unique_ids": 1240,
+  "unique_ordered_triplets": 1240,
+  "counts_by_split": {
+    "easy": 310,
+    "medium": 310,
+    "hard": 310,
+    "extreme": 310
+  },
+  "groups": 31,
+  "triplets_per_group_per_split": 10,
+  "metric_ids_split_and_group_match": true,
+  "within_triplet_paths_distinct": true,
+  "all_triplets_share_one_sequence_directory": true,
+  "sequence_directories_match_group_labels": true,
+  "frame_indices_strictly_increasing_and_symmetric": true,
+  "frame_step_counts_by_split": {
+    "easy": {
+      "1": 310
+    },
+    "medium": {
+      "2": 310
+    },
+    "hard": {
+      "4": 310
+    },
+    "extreme": {
+      "8": 310
+    }
+  },
+  "source_image_files_checked": false,
+  "official_test_lists_independently_compared": false,
+  "note": "Hash and path structure verified against the supplied run. Original source image files and official test lists were not supplied."
+}

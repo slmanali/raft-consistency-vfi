@@ -79,10 +79,18 @@ The audit checked:
 
 This checks the supplied records and examples; it is not a second GPU execution.
 The archive omits the source manifest, full float predictions, flow arrays and
-hole masks. Exact frame paths and membership in the official lists still need
-the original `data/snu_film.csv`. Its recorded SHA-256 is:
+hole masks. The original `data/snu_film.csv` was subsequently supplied separately.
+Its SHA-256 exactly matches the recorded value:
 
 `0c849ffa7390531391a6b91b567e2a0f4faec2edccd4644f14701d9daab21867`
+
+All 1,240 manifest ids, split labels and sequence groups match the metric records.
+The manifest has 1,240 unique ordered triplets, with distinct paths in the same
+sequence directory and the target index midway between the input indices. Frame
+steps are 1, 2, 4 and 8 in Easy, Medium, Hard and Extreme. Each of the 31 groups
+has ten triplets per subset. These checks establish consistency with the logged
+run. Original source image files and official test lists were not independently
+compared.
 
 ## Files
 
@@ -93,10 +101,12 @@ the original `data/snu_film.csv`. Its recorded SHA-256 is:
 - `saved_examples.csv`: original metric records for the four saved triplets.
 - `png_metric_check.csv`: quantized-export PSNR/SSIM checks.
 - `audit.json`: counts, checks and hashes of the supplied source files.
+- `manifest_check.json`: verification of the manifest supplied after the archive.
 
 The original per-image records and complete example images remain in the source
 archive; this directory is a compact analysis record. The updated
-[Russian manuscript](../../paper/article_ru.md) contains the method, complete
+[Russian manuscript](../../paper/article_ru.md) and its
+[English version](../../paper/article_en.md) contain the method, complete
 quality table, limitations and the selected Extreme example. The sample id was
 selected before the full run; the common crop was chosen during analysis and
 does not replace the aggregate evaluation.

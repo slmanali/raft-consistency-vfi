@@ -1,4 +1,4 @@
-"""Build editable Word equations with Pandoc, then format the Russian manuscript.
+"""Build editable Word equations with Pandoc, then format a manuscript.
 
 Requires pandoc and python-docx. Render and inspect the output before submission.
 """
@@ -16,8 +16,9 @@ from docx.oxml.ns import qn
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output",required=True)
+    parser.add_argument("--language",choices=("ru","en"),default="ru")
     args=parser.parse_args()
-    source=Path(__file__).resolve().parents[1]/"paper"/"article_ru.md"
+    source=Path(__file__).resolve().parents[1]/"paper"/f"article_{args.language}.md"
     out=Path(args.output).resolve()
     out.parent.mkdir(parents=True,exist_ok=True)
     subprocess.run(["pandoc",str(source),"--from=markdown+tex_math_dollars","--standalone",
@@ -84,6 +85,10 @@ def main():
         s.paragraph_format.first_line_indent=Inches(0)
     paragraphs=doc.paragraphs
     for position,p in enumerate(paragraphs):
+        if args.language=="en" and p.style.name=="Title":
+            p.text="The effect of optical flow consistency\non video frame interpolation quality"
+        if args.language=="en" and p.text=="References":
+            p.paragraph_format.page_break_before=True
         if position+1 < len(paragraphs) and paragraphs[position+1]._p.xpath('.//m:oMathPara'):
             p.paragraph_format.keep_with_next=True
         if p.style.style_id.startswith("Heading") or p.style.name=="Title":
@@ -100,9 +105,9 @@ def main():
             p.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before=Pt(3)
             p.paragraph_format.space_after=Pt(6)
-        if p.text.startswith(("Аннотация.","Ключевые слова:")):
+        if p.text.startswith(("Аннотация.","Ключевые слова:","Abstract.","Keywords:")):
             p.paragraph_format.first_line_indent=Inches(0)
-        if p.text.startswith("Таблица "):
+        if p.text.startswith(("Таблица ","Table ")):
             p.paragraph_format.first_line_indent=Inches(0)
             p.paragraph_format.keep_with_next=True
             p.paragraph_format.space_before=Pt(7)
@@ -153,6 +158,7 @@ def main():
                     shade=OxmlElement("w:shd"); shade.set(qn("w:fill"),"ECECEC"); tcpr.append(shade)
                 for p in cell.paragraphs:
                     p.paragraph_format.first_line_indent=Inches(0)
+                    p.paragraph_format.keep_with_next=ri<len(table.rows)-1
                     p.paragraph_format.alignment=(WD_ALIGN_PARAGRAPH.CENTER if ri==0
                         else WD_ALIGN_PARAGRAPH.LEFT if ci<2 else WD_ALIGN_PARAGRAPH.RIGHT)
                     p.paragraph_format.space_after=Pt(1)
@@ -166,9 +172,14 @@ def main():
     footer=sec.footer.paragraphs[0]
     footer.alignment=WD_ALIGN_PARAGRAPH.CENTER
     field=OxmlElement("w:fldSimple"); field.set(qn("w:instr"),"PAGE"); footer._p.append(field)
-    doc.core_properties.author="Салман Али"
-    doc.core_properties.title="Влияние согласованности оптического потока на качество интерполяции видеокадров"
-    doc.core_properties.subject="Результаты контролируемого эксперимента на 1240 тройках SNU-FILM"
+    if args.language=="en":
+        doc.core_properties.author="Salman Ali"
+        doc.core_properties.title="The effect of optical flow consistency on video frame interpolation quality"
+        doc.core_properties.subject="Controlled experiment on 1240 SNU-FILM triplets"
+    else:
+        doc.core_properties.author="Салман Али"
+        doc.core_properties.title="Влияние согласованности оптического потока на качество интерполяции видеокадров"
+        doc.core_properties.subject="Результаты контролируемого эксперимента на 1240 тройках SNU-FILM"
     doc.save(out)
     print(out)
 

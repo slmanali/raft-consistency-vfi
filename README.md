@@ -239,6 +239,7 @@ true occlusion accuracy, or optical-flow endpoint error.
 ## Article and source files
 
 - `paper/article_ru.md`: Russian manuscript with equations and nine references.
+- `paper/article_en.md`: English version with the same equations, measurements and references.
 - `src/raft_consistency_vfi/core.py`: weighting and deterministic forward splatting.
 - `src/raft_consistency_vfi/models.py`: optional Torchvision RAFT adapter.
 - `src/raft_consistency_vfi/cli.py`: evaluation and external prediction scoring.
@@ -249,6 +250,7 @@ To rebuild Word output, install Pandoc and python-docx, then run:
 ```bash
 python -m pip install python-docx
 python scripts/build_manuscript.py --output paper/article_ru.docx
+python scripts/build_manuscript.py --language en --output paper/article_en.docx
 ```
 
 Pandoc writes native Word equations. Inspect the rendered pages before submitting.
