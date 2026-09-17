@@ -1,0 +1,6 @@
+# Linux CUDA 12.4 profile. Install the PyTorch wheels from the cu124 index first;
+# see README.md. The local version suffix prevents a CPU or other CUDA build
+# from silently satisfying this experiment profile.
+torch==2.6.0+cu124
+torchvision==0.21.0+cu124
+lpips==0.1.4
