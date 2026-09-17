@@ -34,13 +34,64 @@ rcvfi demo --output outputs/demo
 The demo uses a supplied constant translation field. It tests coordinate geometry;
 it is not an optical-flow benchmark. It needs no network, model or dataset.
 
-For learned models, install a compatible PyTorch/Torchvision pair using the
-[official installation instructions](https://pytorch.org/get-started/locally/),
-then install the optional dependencies:
+## Install learned models on the experiment laptop
+
+The reported Linux laptop has an RTX 3050 with 6 GB VRAM, NVIDIA driver 565.77,
+and CUDA Toolkit 12.4. Its `nvidia-smi` display of CUDA 12.7 describes the driver's
+CUDA support; `nvcc --version` describes the separately installed compiler.
+PyTorch's prebuilt wheels bring their own CUDA runtime dependencies. The local
+toolkit does not choose which wheel pip installs.
+
+An unconstrained `pip install -e '.[models]'` selected PyTorch 2.14.0 with CUDA 13
+in the reported installation. CUDA 13 requires driver 580 or newer, so it cannot
+initialize on this driver. See NVIDIA's
+[compatibility table](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html).
+The following profile uses the official PyTorch 2.6.0 / Torchvision 0.21.0 CUDA
+12.4 pair from the [PyTorch version table](https://pytorch.org/get-started/previous-versions/).
+It requires no change to the laptop's system CUDA installation.
+
+Run from the repository root with Python 3.12. A separate environment avoids
+mixing dependencies from the earlier CUDA 13 installation:
 
 ```bash
-python -m pip install -e '.[models]'
+python3.12 -m venv .venv-cu124
+source .venv-cu124/bin/activate
+python -m pip install torch==2.6.0 torchvision==0.21.0 \
+  --index-url https://download.pytorch.org/whl/cu124
+python -m pip install -c constraints-cu124.txt -e '.[models]'
+python -m pip check
 ```
+
+Install the PyTorch wheels first: the constraints file fixes the builds but does
+not supply a package index. Keep using this constraints file for subsequent
+model dependency installs in this environment. For another GPU or driver, select
+and record an appropriate pair using the
+[official instructions](https://pytorch.org/get-started/locally/).
+
+Verify that this Python environment can execute a CUDA operation:
+
+```bash
+python - <<'PY'
+import torch
+import torchvision
+
+print("PyTorch:", torch.__version__)
+print("Torchvision:", torchvision.__version__)
+print("PyTorch CUDA runtime:", torch.version.cuda)
+print("CUDA available:", torch.cuda.is_available())
+assert torch.cuda.is_available(), "CUDA initialization failed in this environment"
+print("GPU:", torch.cuda.get_device_name(0))
+x = torch.ones((32, 32), device="cuda")
+y = x @ x
+torch.cuda.synchronize()
+assert y[0, 0].item() == 32.0
+print("CUDA operation: OK")
+PY
+```
+
+Expected versions are `2.6.0+cu124`, `0.21.0+cu124` and runtime `12.4`.
+This checks CUDA execution; the RAFT and LPIPS integrations still need the small
+dataset run below on the experiment machine.
 
 The first RAFT or LPIPS run downloads pretrained weights. The default experiment
 uses the explicit RAFT Large `C_T_V2` weights, 20 updates, float32, and no resizing.
@@ -74,12 +125,34 @@ overlap with pretrained-model training data need to be reported for publication.
 
 ## Run the controlled experiment
 
+After preparing the manifest, start with one triplet:
+
+```bash
+rcvfi evaluate \
+  --manifest data/snu_film.csv --split easy --limit 1 \
+  --method raft --device cuda --weights C_T_V2 --iterations 20 \
+  --alpha 0.01 --beta 0.5 --warmup 1 --lpips \
+  --output outputs/raft_cu124_smoke
+```
+
+The first run downloads weights. A successful run writes `run.json` with
+`"status": "completed"` and the metric CSV files. This is an installation check,
+not a benchmark result. `--limit` reduces the number of triplets, not the memory
+required by each image. Full-resolution RAFT can exceed 6 GB because its
+all-pairs correlation volume grows quadratically with the number of feature
+pixels, as follows from the correlation tensor shape in the
+[Torchvision implementation](https://docs.pytorch.org/vision/0.21/_modules/torchvision/models/optical_flow/raft.html).
+If this run reports out-of-memory, keep the error and image dimensions so that
+a memory strategy can be chosen and documented before the full experiment.
+
+After the small run succeeds, evaluate the complete manifest:
+
 ```bash
 rcvfi evaluate \
   --manifest data/snu_film.csv \
   --method raft --device cuda --weights C_T_V2 --iterations 20 \
   --alpha 0.01 --beta 0.5 --warmup 2 --lpips \
-  --output outputs/raft_ctv2
+  --output outputs/raft_ctv2_cu124
 ```
 
 This evaluates `average`, `raft_uniform`, `raft_hard` and `raft_soft` using the same
@@ -103,6 +176,9 @@ Every completed run writes:
 
 The output directory must be new. A failed or interrupted run remains marked
 `running`; partial CSV files must not be reported as a completed benchmark.
+The earlier CUDA initialization failure may already have created
+`outputs/raft_ctv2`; the commands above use separate destinations. Choose another
+new output name if you repeat either command.
 Perfect reconstruction has infinite PSNR and remains `inf` in CSV, without an
 arbitrary cap. LPIPS is absent when `--lpips` is not supplied; it is never replaced
 by another metric.
