@@ -20,8 +20,31 @@ def main():
     source=Path(__file__).resolve().parents[1]/"paper"/"article_ru.md"
     out=Path(args.output).resolve()
     out.parent.mkdir(parents=True,exist_ok=True)
-    subprocess.run(["pandoc",str(source),"--from=markdown+tex_math_dollars","--standalone","-o",str(out)],check=True)
+    subprocess.run(["pandoc",str(source),"--from=markdown+tex_math_dollars","--standalone",
+        "--resource-path",str(source.parent),"-o",str(out)],check=True)
     doc=Document(out)
+    # Literal square brackets avoid a LibreOffice import error in which a
+    # stretchy closing bracket is rendered as a parenthesis. Keep native math.
+    for delimiter in reversed(doc.element.xpath('.//m:d')):
+        props=delimiter.find(qn("m:dPr"))
+        if props is None: continue
+        begin=props.find(qn("m:begChr")); end=props.find(qn("m:endChr"))
+        if begin is None or end is None: continue
+        if (begin.get(qn("m:val")),end.get(qn("m:val"))) != ("[","]"): continue
+        entries=delimiter.findall(qn("m:e"))
+        if len(entries)!=1: continue
+        brackets=[]
+        for value in ("[","]"):
+            run=OxmlElement("m:r")
+            props_run=OxmlElement("m:rPr")
+            style=OxmlElement("m:sty"); style.set(qn("m:val"),"p")
+            props_run.append(style); run.append(props_run)
+            text=OxmlElement("m:t"); text.text=value; run.append(text)
+            brackets.append(run)
+        parent=delimiter.getparent(); position=parent.index(delimiter)
+        children=[brackets[0],*list(entries[0]),brackets[1]]
+        parent.remove(delimiter)
+        for offset,child in enumerate(children): parent.insert(position+offset,child)
     sec=doc.sections[0]
     sec.page_width=Inches(8.5); sec.page_height=Inches(11)
     sec.top_margin=Inches(0.65); sec.bottom_margin=Inches(0.65)
@@ -79,23 +102,30 @@ def main():
             p.paragraph_format.space_after=Pt(6)
         if p.text.startswith(("Аннотация.","Ключевые слова:")):
             p.paragraph_format.first_line_indent=Inches(0)
-        if p.text=="Литература":
-            p.paragraph_format.page_break_before=True
+        if p.text.startswith("Таблица "):
+            p.paragraph_format.first_line_indent=Inches(0)
+            p.paragraph_format.keep_with_next=True
+            p.paragraph_format.space_before=Pt(7)
+        if p._p.xpath('.//w:drawing'):
+            p.paragraph_format.first_line_indent=Inches(0)
+            p.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.keep_with_next=True
+            p.paragraph_format.space_after=Pt(3)
+        if "Caption" in p.style.name or p.text.startswith("Рисунок "):
+            p.paragraph_format.first_line_indent=Inches(0)
+            p.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.keep_with_next=False
+            p.paragraph_format.space_after=Pt(7)
+            for r in p.runs:r.font.size=Pt(10.5)
         if p.style.name=="Compact":
             p.paragraph_format.first_line_indent=Inches(0)
             p.paragraph_format.space_after=Pt(4)
             for r in p.runs: r.font.size=Pt(10.5)
     for table in doc.tables:
-        caption=OxmlElement("w:p")
-        cp=OxmlElement("w:pPr")
-        keep=OxmlElement("w:keepNext");cp.append(keep);caption.append(cp)
-        run=OxmlElement("w:r");text=OxmlElement("w:t")
-        text.text="Таблица 1 Сравниваемые варианты интерполяции"
-        run.append(text);caption.append(run)
-        table._tbl.addprevious(caption)
         table.alignment=WD_TABLE_ALIGNMENT.CENTER
         table.autofit=False
-        widths=[1.25,3.15,2.45]
+        widths=([0.85,1.50,1.00,0.85,0.90,1.75] if len(table.columns)==6
+                else [6.85/len(table.columns)]*len(table.columns))
         for i,w in enumerate(widths): table.columns[i].width=Inches(w)
         props=table._tbl.tblPr
         borders=OxmlElement("w:tblBorders")
@@ -123,7 +153,8 @@ def main():
                     shade=OxmlElement("w:shd"); shade.set(qn("w:fill"),"ECECEC"); tcpr.append(shade)
                 for p in cell.paragraphs:
                     p.paragraph_format.first_line_indent=Inches(0)
-                    p.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.LEFT
+                    p.paragraph_format.alignment=(WD_ALIGN_PARAGRAPH.CENTER if ri==0
+                        else WD_ALIGN_PARAGRAPH.LEFT if ci<2 else WD_ALIGN_PARAGRAPH.RIGHT)
                     p.paragraph_format.space_after=Pt(1)
                     p.paragraph_format.line_spacing=1
                     for r in p.runs:
@@ -137,7 +168,7 @@ def main():
     field=OxmlElement("w:fldSimple"); field.set(qn("w:instr"),"PAGE"); footer._p.append(field)
     doc.core_properties.author="Салман Али"
     doc.core_properties.title="Влияние согласованности оптического потока на качество интерполяции видеокадров"
-    doc.core_properties.subject="Методика и протокол экспериментальной проверки"
+    doc.core_properties.subject="Результаты контролируемого эксперимента на 1240 тройках SNU-FILM"
     doc.save(out)
     print(out)
 

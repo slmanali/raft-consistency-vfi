@@ -5,10 +5,12 @@ flow consistency. Two RAFT flow fields are reused across three synthesis variant
 geometric validity alone, a binary consistency mask, and a continuous weight.
 The interpolation operator and hole-filling rule are identical.
 
-**Status:** reference implementation and article draft. CPU geometry, metrics,
-manifest handling and evaluation tests have been run. Pretrained RAFT, RIFE and
-LPIPS integration require validation on the experiment machine. No SNU-FILM
-benchmark results are included. The article has no invented numerical results.
+**Status:** the RAFT/LPIPS experiment completed on 17 September 2026 on all
+1,240 SNU-FILM triplets (310 per difficulty). Its 4,960 metric records reproduce
+the reported summaries and paired differences. With the fixed settings tested,
+RAFT uniform has better mean PSNR, SSIM and LPIPS than hard and soft weighting
+in every difficulty. See the [results and verification record](results/2026-09-17/README.md).
+The Russian manuscript now includes these measurements. RIFE remains pending.
 
 ## Research question
 
@@ -90,8 +92,8 @@ PY
 ```
 
 Expected versions are `2.6.0+cu124`, `0.21.0+cu124` and runtime `12.4`.
-This checks CUDA execution; the RAFT and LPIPS integrations still need the small
-dataset run below on the experiment machine.
+This checks CUDA execution. On a new installation, validate the RAFT and LPIPS
+integrations with the small dataset run below before a full experiment.
 
 The first RAFT or LPIPS run downloads pretrained weights. The default experiment
 uses the explicit RAFT Large `C_T_V2` weights, 20 updates, float32, and no resizing.
@@ -209,9 +211,10 @@ rcvfi score \
 The adapter preserves the original BGR model input convention and exports RGB
 float32 `.npy` predictions, avoiding PNG quantization. It saves all predictions
 temporarily for scoring. PNG predictions from another implementation are also
-accepted by `score`, but their 8-bit quantization is recorded. No learned-model
-adapter has been executed in the authoring environment; validate a small run
-against the selected upstream implementation before the full experiment.
+accepted by `score`, but their 8-bit quantization is recorded. The completed
+experiment uses RAFT and LPIPS on the experiment laptop. The RIFE adapter has
+not yet been validated against the selected upstream implementation; start
+with a small run before the full RIFE comparison.
 
 ## Evaluation and timing
 
@@ -249,8 +252,10 @@ python scripts/build_manuscript.py --output paper/article_ru.docx
 ```
 
 Pandoc writes native Word equations. Inspect the rendered pages before submitting.
-The manuscript currently establishes the method and protocol. Experimental
-results, hardware details and the final conclusions must come from actual runs.
+The manuscript reports the completed RAFT experiment, hardware and software,
+paired comparisons and limitations. The measurements support a negative result
+for these fixed weighting rules; they do not establish that consistency is
+unhelpful in other interpolation architectures.
 
 ## Attribution
 
