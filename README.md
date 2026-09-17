@@ -57,8 +57,8 @@ from version control.
 
 ```bash
 rcvfi make-snu-manifest \
-  --data-root data/SNU-FILM \
-  --list-root data/SNU-FILM/lists \
+  --data-root /home/salman/Documents/GitHub/PhaseNet/SNU-FILM \
+  --list-root /home/salman/Documents/GitHub/PhaseNet/SNU-FILM/eval_modes \
   --output data/snu_film.csv
 ```
 
@@ -119,11 +119,11 @@ The adapter checks that the checkout is clean and records its exact commit.
 python scripts/export_rife.py \
   --repo third_party/ECCV2022-RIFE \
   --weights weights/rife/flownet.pkl \
-  --manifest data/snu_film.csv --device cuda \
+  --manifest /home/salman/Documents/GitHub/PhaseNet/SNU-FILM/snu_film.csv --device cuda \
   --output outputs/rife_export
 
 rcvfi score \
-  --manifest data/snu_film.csv \
+  --manifest /home/salman/Documents/GitHub/PhaseNet/SNU-FILM/snu_film.csv \
   --predictions outputs/rife_export/predictions \
   --provenance outputs/rife_export/provenance.json \
   --timings outputs/rife_export/timings.csv \
